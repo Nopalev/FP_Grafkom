@@ -3,7 +3,11 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.118/build/three.mod
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js";
 
 let scene, camera, renderer;
-let objects = [], rotation = [0.0005, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01];
+let objects = [], 
+	rotation = [0, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
+	position = [0, 0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
+	revolute = [0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+	revolutionSpeed = [0.01, 0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002, 0.001];
 
 class Planet {
 	constructor(src, radius, position){
@@ -12,6 +16,7 @@ class Planet {
 		const material = new THREE.MeshBasicMaterial({
 			map: texture
 		});
+		// this.initialPosition = position;
 		const planet = new THREE.Mesh(geo, material);
 		planet.position.set(position, 0, position);
 		planet.castShadow = false;
@@ -39,7 +44,7 @@ function init() {
 	let controls = new OrbitControls(camera, renderer.domElement);
 	controls.addEventListener("change", renderer);
 	controls.minDistance = 50;
-	controls.maxDistance = 2500;
+	controls.maxDistance = 3000;
 
 	let skyboxTexture = new THREE.TextureLoader().load("src/space.jpg");
 	skyboxTexture.wrapS = THREE.RepeatWrapping;
@@ -105,7 +110,11 @@ function init() {
 function animate() {
 	let index = 0;
 	objects.forEach( Element => {
-		Element.rotation.y += rotation[index++];
+		Element.rotation.y += rotation[index];
+		Element.position.x = position[index] * Math.sin(revolute[index]);
+		Element.position.z = position[index] * Math.cos(revolute[index]);
+		revolute[index] += revolutionSpeed[index];
+		index++;
 	});
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);

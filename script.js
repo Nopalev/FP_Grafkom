@@ -2,8 +2,8 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.118/build/three.mod
 
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js";
 
-const base_day = 0.01
 const base_year = 0.01
+const base_day = base_year * 365
 
 function year(day) {
 	return 365 / day * base_year
@@ -69,6 +69,7 @@ function init() {
 	let skyboxGeo = new THREE.SphereGeometry(5000, 64, 32);
 	let skybox = new THREE.Mesh(skyboxGeo, skyboxMaterial);
 	scene.add(skybox);
+
 
 	const sunGeo = new THREE.SphereGeometry(100, 64, 32);
 	const sunTexture = new THREE.TextureLoader().load("src/sun/sun.jpg");
@@ -138,10 +139,18 @@ function init() {
 function animate() {
 	let index = 0;
 	objects.forEach( Element => {
-		Element.rotation.y += rotation[index];
+		Element.rotation.y -= rotation[index];
 		Element.position.x = position[index] * Math.sin(revolute[index]);
 		Element.position.z = position[index] * Math.cos(revolute[index]);
 		revolute[index] += revolutionSpeed[index];
+		let day = document
+		.getElementById('days_info')
+		.innerHTML.match(/\d+/)[0]
+
+		// gatau kenapa tapi full rotation kalo mod 6
+		if (index == 3 && parseFloat(Math.abs(Element.rotation.y)) >= (6) * (Number(day) + 1)) {
+			document.getElementById('days_info').innerHTML = (Number(day) + 1) + " days elapsed on earth";
+		}
 		index++;
 	});
 	moon.rotation.y += day(30);
@@ -151,4 +160,15 @@ function animate() {
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
 }
+var text2 = document.createElement('div');
+text2.style.position = 'absolute';
+text2.style.width = 100;
+text2.style.height = 100;
+text2.style.fontSize = 50 + "px";
+text2.style.backgroundColor = "white";
+text2.innerHTML = "0 days elapsed on earth";
+text2.style.top = 100 + 'px';
+text2.style.left = 100 + 'px';
+text2.id = 'days_info'
+document.body.appendChild(text2);
 init();

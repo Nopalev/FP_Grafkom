@@ -2,12 +2,23 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.118/build/three.mod
 
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js";
 
+const base_day = 0.01
+const base_year = 0.01
+
+function year(day) {
+	return 365 / day * base_year
+}
+
+function day(day) {
+	return base_day / day
+}
+
 let scene, camera, renderer;
 let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn's ring, uranus, neptune]
-	rotation =        [ 0.01,  0.01,  0.01,  0.01,  0.01,  0.01,  0.01,     0,  0.01,  0.01],
+	rotation =        [ 0,  day(58),  -day(116),  base_day,  day(1),  day(0.26),  day(0.24), 0, -day(0.14),  day(0.15)],
 	position =        [    0,   300,   600,   900,  1200,  1500,  1800,  1800,  2100,  2400],
 	revolute =        [  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0],
-	revolutionSpeed = [    0, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.003, 0.002, 0.001],
+	revolutionSpeed = [    0, year(88), year(225), base_year, year(687), year(4330), year(10755), year(10755), year(30687), year(60190)],
 	moon, moonRevolute = 0.0;
 
 class Planet {

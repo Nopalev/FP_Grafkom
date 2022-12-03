@@ -144,10 +144,10 @@ function animate() {
 		revolute[index] += revolutionSpeed[index];
 		index++;
 	});
-	moon.rotation.y += 0.001;
+	moon.rotation.y += day(30);
 	moon.position.x = objects[3].position.x + (100 * Math.sin(moonRevolute));
 	moon.position.z = objects[3].position.z + (100 * Math.cos(moonRevolute));
-	moonRevolute += 0.01;
+	moonRevolute += 27 * base_year;
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
 }

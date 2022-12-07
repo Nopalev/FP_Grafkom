@@ -12,7 +12,22 @@ function year(day) {
 function day(day) {
 	return base_day / day
 }
+const vertexShader = /*glsl*/`
+void main() {
+	gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
 
+const fragmentShader = /*glsl*/`
+void main() {
+	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+}
+`;
+
+const shadermaterial = new THREE.ShaderMaterial({
+	fragmentShader: fragmentShader,
+	vertexShader: vertexShader
+});
 let scene, camera, renderer;
 let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn's ring, uranus, neptune]
 	rotation =        [ 0,  day(58),  -day(116),  base_day,  day(1),  day(0.26),  day(0.24), 0, -day(0.14),  day(0.15)],
@@ -25,13 +40,13 @@ class Planet {
 	constructor(src, radius, position, axialTilt){
 		const geo = new THREE.SphereGeometry(radius, 64, 32);
 		const texture = new THREE.TextureLoader().load(src);
-		const material = new THREE.MeshBasicMaterial({
+		const material = new THREE.MeshStandardMaterial({
 			map: texture
 		});
 		// this.initialPosition = position;
-		const planet = new THREE.Mesh(geo, material);
+		const planet = new THREE.Mesh(geo, material, shadermaterial);
 		planet.position.set(position, 0, position);
-		planet.castShadow = false;
+		planet.castShadow = true;
 		planet.receiveShadow = true;
 		planet.rotation.x = -axialTilt * Math.PI / 180;
 		return planet;
@@ -78,8 +93,14 @@ function init() {
 	});
 	const sun = new THREE.Mesh(sunGeo, sunMaterial);
 	sun.rotation.x = -7.25 * Math.PI / 180;
+	sun.castShadow = false;
+	sun.receiveShadow = false;
 	objects.push(sun);
 	scene.add(sun);
+
+	var sunlight = new THREE.PointLight(0xffffff, 1, 100000);
+	sunlight.position.set(0,0,0);
+	scene.add(sunlight);
 	
 	const mercury = new Planet("src/mercury/mercury.jpg", 50, 150, 0.03);
 	objects.push(mercury);
@@ -127,6 +148,9 @@ function init() {
 	const neptune = new Planet("src/neptune/neptune.jpg", 50, 850, 28.32);
 	objects.push(neptune);
 	scene.add(neptune);
+
+	var galaxy_light = new THREE.AmbientLight(0xffffff, 0.3);
+	scene.add(galaxy_light);
 
 	window.addEventListener('resize', () => {
 		camera.aspect = window.innerWidth / window.innerHeight;

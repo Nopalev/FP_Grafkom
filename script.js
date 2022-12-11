@@ -1,4 +1,4 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.118/build/three.module.js";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js";
 
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js";
 
@@ -28,7 +28,7 @@ const shadermaterial = new THREE.ShaderMaterial({
 	fragmentShader: fragmentShader,
 	vertexShader: vertexShader
 });
-let scene, camera, renderer;
+let scene, camera, renderer, raycaster, mouse, INTERSECTED;
 let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn's ring, uranus, neptune]
 	rotation =        [ 0,  day(58),  -day(116),  base_day,  day(1),  day(0.26),  day(0.24), 0, -day(0.14),  day(0.15)],
 	position =        [    0,   300,   600,   900,  1200,  1500,  1800,  1800,  2100,  2400],
@@ -53,6 +53,31 @@ class Planet {
 	}
 }
 
+function hideOutline(obj){
+	if (obj.children.length != 0) {
+		const outlineObject = obj.children[0];
+		outlineObject.visible = false;
+	}
+}
+
+function showOutline(obj){
+	if (obj.children.length != 0) {
+		const outlineObject = obj.children[0];
+		outlineObject.visible = true;
+	}
+}
+
+function outline(obj) {
+	const geo = obj.geometry;
+	var outlineMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, side: THREE.BackSide} );
+	var outlineMesh = new THREE.Mesh( geo, outlineMaterial );
+	// outlineMesh.position.copy(obj.position);
+	outlineMesh.scale.multiplyScalar(1.05);
+	obj.add(outlineMesh);
+	hideOutline(obj);
+	return outlineMesh;
+}
+
 function init() {
 	scene = new THREE.Scene();
 	camera = new THREE.PerspectiveCamera(
@@ -61,6 +86,8 @@ function init() {
 		45,
 		30000
 	);
+	mouse = new THREE.Vector2();
+	raycaster = new THREE.Raycaster();
 	camera.position.set(-900, 0, 0);
 
 	renderer = new THREE.WebGLRenderer({ 
@@ -95,6 +122,7 @@ function init() {
 	sun.rotation.x = -7.25 * Math.PI / 180;
 	sun.castShadow = false;
 	sun.receiveShadow = false;
+	outline(sun);
 	objects.push(sun);
 	scene.add(sun);
 
@@ -103,14 +131,17 @@ function init() {
 	scene.add(sunlight);
 	
 	const mercury = new Planet("src/mercury/mercury.jpg", 50, 150, 0.03);
+	outline(mercury);
 	objects.push(mercury);
 	scene.add(mercury);
 
 	const venus = new Planet("src/venus/venus.jpg", 50, 250, 2.64);
+	outline(venus);
 	objects.push(venus);
 	scene.add(venus);
 
 	const earth = new Planet("src/earth/earth.png", 50, 350, 23.44);
+	outline(earth);
 	objects.push(earth);
 	scene.add(earth);
 
@@ -118,14 +149,17 @@ function init() {
 	scene.add(moon);
 
 	const mars = new Planet("src/mars/mars.jpg", 50, 450, 25.19);
+	outline(mars);
 	objects.push(mars);
 	scene.add(mars);
 
 	const jupiter = new Planet("src/jupiter/jupiter.jpg", 50, 550, 3.13);
+	outline(jupiter);
 	objects.push(jupiter);
 	scene.add(jupiter);
 
 	const saturn = new Planet("src/saturn/saturn.jpg", 50, 650, 26.73);
+	outline(saturn);
 	objects.push(saturn);
 	scene.add(saturn);
 	const ringGeo = new THREE.RingGeometry(65, 115, 64);
@@ -142,10 +176,12 @@ function init() {
 	scene.add(ring);
 
 	const uranus = new Planet("src/uranus/uranus.jpg", 50, 750, 82.23);
+	outline(uranus);
 	objects.push(uranus);
 	scene.add(uranus);
 
 	const neptune = new Planet("src/neptune/neptune.jpg", 50, 850, 28.32);
+	outline(neptune);
 	objects.push(neptune);
 	scene.add(neptune);
 
@@ -158,8 +194,17 @@ function init() {
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	  }, false);
 
+	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
 	animate();
 }
+
+function onDocumentMouseMove( event ) 
+{
+	mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+}
+
 function animate() {
 	let index = 0;
 	objects.forEach( Element => {
@@ -183,6 +228,28 @@ function animate() {
 	moonRevolute += 27 * base_year;
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
+
+	console.log(mouse);
+	
+	raycaster.setFromCamera( mouse, camera );
+	var intersects = raycaster.intersectObjects(scene.children);
+
+	if ( intersects.length > 0 )
+	{
+		if ( intersects[ 0 ].object != INTERSECTED ) 
+		{
+			if ( INTERSECTED ) 
+				hideOutline(INTERSECTED);
+			INTERSECTED = intersects[ 0 ].object;
+			showOutline(INTERSECTED);
+		}
+	} 
+	else // there are no intersections
+	{
+		if ( INTERSECTED ) 
+			hideOutline(INTERSECTED);
+		INTERSECTED = null;
+	}
 }
 var text2 = document.createElement('div');
 text2.style.position = 'absolute';

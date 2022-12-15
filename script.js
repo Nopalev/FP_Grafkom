@@ -4,6 +4,7 @@ import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples
 
 const base_year = 0.01
 const base_day = base_year * 365
+let multiplier = 0.01;
 
 function year(day) {
 	return 365 / day * base_year
@@ -146,6 +147,7 @@ function init() {
 	scene.add(earth);
 
 	moon = new Planet("src/earth/moon.jpg", 20, 500, 6.68);
+	outline(moon);
 	scene.add(moon);
 
 	const mars = new Planet("src/mars/mars.jpg", 50, 450, 25.19);
@@ -172,6 +174,8 @@ function init() {
 	const ring = new THREE.Mesh(ringGeo, ringMaterial);
 	ring.rotation.x = Math.PI/2;
 	ring.rotation.x = (90 - 26.73) * Math.PI / 180;
+	ring.castShadow = true;
+	ring.receiveShadow = true;
 	objects.push(ring);
 	scene.add(ring);
 
@@ -195,6 +199,15 @@ function init() {
 	  }, false);
 
 	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+	document.addEventListener('keydown', (event) => {
+		if(event.key === 'a' && multiplier > 0.01){
+			multiplier /= 10
+			console.log(multiplier);
+		}
+		else if(event.key === 's' && multiplier < 100){
+			multiplier *= 10;
+		}
+	});
 
 	animate();
 }
@@ -206,12 +219,13 @@ function onDocumentMouseMove( event )
 }
 
 function animate() {
+	console.log(multiplier);
 	let index = 0;
 	objects.forEach( Element => {
-		Element.rotation.y -= rotation[index];
+		Element.rotation.y -= rotation[index] * multiplier;
 		Element.position.x = position[index] * Math.sin(revolute[index]);
 		Element.position.z = position[index] * Math.cos(revolute[index]);
-		revolute[index] += revolutionSpeed[index];
+		revolute[index] += revolutionSpeed[index] * multiplier;
 		let day = document
 		.getElementById('days_info')
 		.innerHTML.match(/\d+/)[0]
@@ -222,14 +236,12 @@ function animate() {
 		}
 		index++;
 	});
-	moon.rotation.y += day(30);
+	moon.rotation.y += day(30) * multiplier;
 	moon.position.x = objects[3].position.x + (100 * Math.sin(moonRevolute));
 	moon.position.z = objects[3].position.z + (100 * Math.cos(moonRevolute));
-	moonRevolute += 27 * base_year;
+	moonRevolute += 27 * base_year * multiplier;
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
-
-	console.log(mouse);
 	
 	raycaster.setFromCamera( mouse, camera );
 	var intersects = raycaster.intersectObjects(scene.children);

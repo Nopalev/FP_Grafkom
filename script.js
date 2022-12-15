@@ -264,14 +264,7 @@ function animate() {
 	}
 }
 var text2 = document.createElement('div');
-text2.style.position = 'absolute';
-text2.style.width = 100;
-text2.style.height = 100;
-text2.style.fontSize = 50 + "px";
-text2.style.backgroundColor = "white";
 text2.innerHTML = "0 days elapsed on earth";
-text2.style.top = 100 + 'px';
-text2.style.left = 100 + 'px';
 text2.id = 'days_info'
 document.body.appendChild(text2);
 init();

@@ -1,6 +1,6 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js";
 
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js";
+import { FlyControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/FlyControls.js";
 
 const base_year = 0.01
 const base_day = base_year * 365
@@ -29,7 +29,7 @@ const shadermaterial = new THREE.ShaderMaterial({
 	fragmentShader: fragmentShader,
 	vertexShader: vertexShader
 });
-let scene, camera, renderer, raycaster, mouse, INTERSECTED;
+let scene, camera, renderer, controls, raycaster, mouse, INTERSECTED;
 let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn's ring, uranus, neptune]
 	rotation =        [ 0,  day(58),  -day(116),  base_day,  day(1),  day(0.26),  day(0.24), 0, -day(0.14),  day(0.15)],
 	position =        [    0,   300,   600,   900,  1200,  1500,  1800,  1800,  2100,  2400],
@@ -102,18 +102,22 @@ function init() {
 	);
 	mouse = new THREE.Vector2();
 	raycaster = new THREE.Raycaster();
-	camera.position.set(-900, 0, 0);
+	camera.position.set(-600, 0, -250);
+	camera.lookAt(0, 0, 0);
 
 	renderer = new THREE.WebGLRenderer({ 
 		antialias: true 
 	});
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;   
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.body.appendChild(renderer.domElement);
 
-	let controls = new OrbitControls(camera, renderer.domElement);
-	controls.addEventListener("change", renderer);
-	controls.minDistance = 50;
-	controls.maxDistance = 3000;
+	controls = new FlyControls( camera, renderer.domElement );
+	controls.movementSpeed = 1250;
+	controls.rollSpeed = Math.PI / 5;
+	controls.autoForward = false;
+	controls.dragToLook = true;
 
 	let skyboxTexture = new THREE.TextureLoader().load("src/space.jpg");
 	skyboxTexture.wrapS = THREE.RepeatWrapping;
@@ -187,7 +191,7 @@ function init() {
 	planets[saturn.id] = 'Saturn';
 	const ringGeo = new THREE.RingGeometry(65, 115, 64);
 	const ringTexture = new THREE.TextureLoader().load("src/saturn/ring.png");
-	const ringMaterial = new THREE.MeshBasicMaterial({
+	const ringMaterial = new THREE.MeshStandardMaterial({
 		map: ringTexture,
 		side: THREE.DoubleSide,
 		transparent: true
@@ -223,13 +227,12 @@ function init() {
 
 	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 	document.addEventListener('keydown', (event) => {
-		if(event.key === 'a' && multiplier > 0.01){
+		if(event.key === 'z' && multiplier > 0.01){
 			multiplier /= 10
-			console.log(multiplier);
-		}
-		else if(event.key === 's' && multiplier < 100){
+		   }
+		   else if(event.key === 'x' && multiplier < 100){
 			multiplier *= 10;
-		}
+		   }		 
 	});
 	document.addEventListener('click', (event) => {
 		console.log('clicked');
@@ -249,7 +252,7 @@ function onDocumentMouseMove( event )
 }
 
 function animate() {
-	console.log(multiplier);
+	controls.update(0.01);
 	let index = 0;
 	objects.forEach( Element => {
 		Element.rotation.y -= rotation[index] * multiplier;
@@ -289,7 +292,6 @@ function animate() {
 			showOutline(INTERSECTED);
 			if (planets[INTERSECTED.id])
 			{
-				console.log(planets[INTERSECTED.id]);
 				document.getElementById('planet_name').innerHTML = planets[INTERSECTED.id];
 			}
 

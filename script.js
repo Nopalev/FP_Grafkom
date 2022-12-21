@@ -37,6 +37,7 @@ let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn
 	revolutionSpeed = [    0, year(88), year(225), base_year, year(687), year(4330), year(10755), year(10755), year(30687), year(60190)],
 	moon, moonRevolute = 0.0;
 
+let planets = {};
 class Planet {
 	constructor(src, radius, position, axialTilt){
 		const geo = new THREE.SphereGeometry(radius, 64, 32);
@@ -126,6 +127,7 @@ function init() {
 	outline(sun);
 	objects.push(sun);
 	scene.add(sun);
+	planets[sun.id] = 'The Sun';
 
 	var sunlight = new THREE.PointLight(0xffffff, 1, 100000);
 	sunlight.position.set(0,0,0);
@@ -135,35 +137,42 @@ function init() {
 	outline(mercury);
 	objects.push(mercury);
 	scene.add(mercury);
+	planets[mercury.id] = 'Mercury';
 
 	const venus = new Planet("src/venus/venus.jpg", 50, 250, 2.64);
 	outline(venus);
 	objects.push(venus);
 	scene.add(venus);
+	planets[venus.id] = 'Venus';
 
 	const earth = new Planet("src/earth/earth.png", 50, 350, 23.44);
 	outline(earth);
 	objects.push(earth);
 	scene.add(earth);
+	planets[earth.id] = 'Earth';
 
 	moon = new Planet("src/earth/moon.jpg", 20, 500, 6.68);
 	outline(moon);
 	scene.add(moon);
+	planets[moon.id] = 'The Moon';
 
 	const mars = new Planet("src/mars/mars.jpg", 50, 450, 25.19);
 	outline(mars);
 	objects.push(mars);
 	scene.add(mars);
+	planets[mars.id] = 'Mars';
 
 	const jupiter = new Planet("src/jupiter/jupiter.jpg", 50, 550, 3.13);
 	outline(jupiter);
 	objects.push(jupiter);
 	scene.add(jupiter);
+	planets[jupiter.id] = 'Jupiter';
 
 	const saturn = new Planet("src/saturn/saturn.jpg", 50, 650, 26.73);
 	outline(saturn);
 	objects.push(saturn);
 	scene.add(saturn);
+	planets[saturn.id] = 'Saturn';
 	const ringGeo = new THREE.RingGeometry(65, 115, 64);
 	const ringTexture = new THREE.TextureLoader().load("src/saturn/ring.png");
 	const ringMaterial = new THREE.MeshBasicMaterial({
@@ -183,11 +192,13 @@ function init() {
 	outline(uranus);
 	objects.push(uranus);
 	scene.add(uranus);
+	planets[uranus.id] = 'Uranus';
 
 	const neptune = new Planet("src/neptune/neptune.jpg", 50, 850, 28.32);
 	outline(neptune);
 	objects.push(neptune);
 	scene.add(neptune);
+	planets[neptune.id] = 'Neptune';
 
 	var galaxy_light = new THREE.AmbientLight(0xffffff, 0.3);
 	scene.add(galaxy_light);
@@ -251,9 +262,18 @@ function animate() {
 		if ( intersects[ 0 ].object != INTERSECTED ) 
 		{
 			if ( INTERSECTED ) 
+			{
 				hideOutline(INTERSECTED);
+				document.getElementById('planet_name').innerHTML = " ";
+			}
 			INTERSECTED = intersects[ 0 ].object;
 			showOutline(INTERSECTED);
+			if (planets[INTERSECTED.id])
+			{
+				console.log(planets[INTERSECTED.id]);
+				document.getElementById('planet_name').innerHTML = planets[INTERSECTED.id];
+			}
+
 		}
 	} 
 	else // there are no intersections
@@ -261,10 +281,16 @@ function animate() {
 		if ( INTERSECTED ) 
 			hideOutline(INTERSECTED);
 		INTERSECTED = null;
+		document.getElementById('planet_name').innerHTML = " ";
 	}
 }
 var text2 = document.createElement('div');
 text2.innerHTML = "0 days elapsed on earth";
 text2.id = 'days_info'
 document.body.appendChild(text2);
+
+var planet_name = document.createElement('div');
+planet_name.innerHTML = " ";
+planet_name.id = 'planet_name'
+document.body.appendChild(planet_name);
 init();

@@ -167,7 +167,7 @@ function init() {
 	scene.add(earth);
 	planets[earth.id] = 'Earth';
 
-	moon = new Planet("src/earth/moon.jpg", 20, 500, 6.68);
+	moon = new Planet("src/earth/moon.jpg", 10, 500, 6.68);
 	outline(moon);
 	scene.add(moon);
 	planets[moon.id] = 'The Moon';

@@ -1,6 +1,6 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js";
 
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js";
+import { FlyControls } from "https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/FlyControls.js";
 
 const base_year = 0.01
 const base_day = base_year * 365
@@ -29,7 +29,7 @@ const shadermaterial = new THREE.ShaderMaterial({
 	fragmentShader: fragmentShader,
 	vertexShader: vertexShader
 });
-let scene, camera, renderer, raycaster, mouse, INTERSECTED;
+let scene, camera, renderer, controls, raycaster, mouse, INTERSECTED;
 let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn's ring, uranus, neptune]
 	rotation =        [ 0,  day(58),  -day(116),  base_day,  day(1),  day(0.26),  day(0.24), 0, -day(0.14),  day(0.15)],
 	position =        [    0,   300,   600,   900,  1200,  1500,  1800,  1800,  2100,  2400],
@@ -37,6 +37,19 @@ let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn
 	revolutionSpeed = [    0, year(88), year(225), base_year, year(687), year(4330), year(10755), year(10755), year(30687), year(60190)],
 	moon, moonRevolute = 0.0;
 
+let planets = {};
+let planet_urls = {
+	'The Sun': 'https://en.wikipedia.org/wiki/Sun',
+	'Mercury': 'https://en.wikipedia.org/wiki/Mercury_(planet)',
+	'Venus': 'https://en.wikipedia.org/wiki/Venus',
+	'Earth': 'https://en.wikipedia.org/wiki/Earth',
+	'The Moon': 'https://en.wikipedia.org/wiki/Moon',
+	'Mars': 'https://en.wikipedia.org/wiki/Mars',
+	'Jupiter': 'https://en.wikipedia.org/wiki/Jupiter',
+	'Saturn': 'https://en.wikipedia.org/wiki/Saturn',
+	'Uranus': 'https://en.wikipedia.org/wiki/Uranus',
+	'Neptune': 'https://en.wikipedia.org/wiki/Neptune'
+}
 class Planet {
 	constructor(src, radius, position, axialTilt){
 		const geo = new THREE.SphereGeometry(radius, 64, 32);
@@ -89,18 +102,22 @@ function init() {
 	);
 	mouse = new THREE.Vector2();
 	raycaster = new THREE.Raycaster();
-	camera.position.set(-900, 0, 0);
+	camera.position.set(-600, 0, -250);
+	camera.lookAt(0, 0, 0);
 
 	renderer = new THREE.WebGLRenderer({ 
 		antialias: true 
 	});
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;   
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.body.appendChild(renderer.domElement);
 
-	let controls = new OrbitControls(camera, renderer.domElement);
-	controls.addEventListener("change", renderer);
-	controls.minDistance = 50;
-	controls.maxDistance = 3000;
+	controls = new FlyControls( camera, renderer.domElement );
+	controls.movementSpeed = 1250;
+	controls.rollSpeed = Math.PI / 5;
+	controls.autoForward = false;
+	controls.dragToLook = true;
 
 	let skyboxTexture = new THREE.TextureLoader().load("src/space.jpg");
 	skyboxTexture.wrapS = THREE.RepeatWrapping;
@@ -126,6 +143,7 @@ function init() {
 	outline(sun);
 	objects.push(sun);
 	scene.add(sun);
+	planets[sun.id] = 'The Sun';
 
 	var sunlight = new THREE.PointLight(0xffffff, 1, 100000);
 	sunlight.position.set(0,0,0);
@@ -135,38 +153,45 @@ function init() {
 	outline(mercury);
 	objects.push(mercury);
 	scene.add(mercury);
+	planets[mercury.id] = 'Mercury';
 
 	const venus = new Planet("src/venus/venus.jpg", 50, 250, 2.64);
 	outline(venus);
 	objects.push(venus);
 	scene.add(venus);
+	planets[venus.id] = 'Venus';
 
 	const earth = new Planet("src/earth/earth.png", 50, 350, 23.44);
 	outline(earth);
 	objects.push(earth);
 	scene.add(earth);
+	planets[earth.id] = 'Earth';
 
 	moon = new Planet("src/earth/moon.jpg", 20, 500, 6.68);
 	outline(moon);
 	scene.add(moon);
+	planets[moon.id] = 'The Moon';
 
 	const mars = new Planet("src/mars/mars.jpg", 50, 450, 25.19);
 	outline(mars);
 	objects.push(mars);
 	scene.add(mars);
+	planets[mars.id] = 'Mars';
 
 	const jupiter = new Planet("src/jupiter/jupiter.jpg", 50, 550, 3.13);
 	outline(jupiter);
 	objects.push(jupiter);
 	scene.add(jupiter);
+	planets[jupiter.id] = 'Jupiter';
 
 	const saturn = new Planet("src/saturn/saturn.jpg", 50, 650, 26.73);
 	outline(saturn);
 	objects.push(saturn);
 	scene.add(saturn);
+	planets[saturn.id] = 'Saturn';
 	const ringGeo = new THREE.RingGeometry(65, 115, 64);
 	const ringTexture = new THREE.TextureLoader().load("src/saturn/ring.png");
-	const ringMaterial = new THREE.MeshBasicMaterial({
+	const ringMaterial = new THREE.MeshStandardMaterial({
 		map: ringTexture,
 		side: THREE.DoubleSide,
 		transparent: true
@@ -183,11 +208,13 @@ function init() {
 	outline(uranus);
 	objects.push(uranus);
 	scene.add(uranus);
+	planets[uranus.id] = 'Uranus';
 
 	const neptune = new Planet("src/neptune/neptune.jpg", 50, 850, 28.32);
 	outline(neptune);
 	objects.push(neptune);
 	scene.add(neptune);
+	planets[neptune.id] = 'Neptune';
 
 	var galaxy_light = new THREE.AmbientLight(0xffffff, 0.3);
 	scene.add(galaxy_light);
@@ -200,12 +227,18 @@ function init() {
 
 	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 	document.addEventListener('keydown', (event) => {
-		if(event.key === 'a' && multiplier > 0.01){
+		if(event.key === 'z' && multiplier > 0.01){
 			multiplier /= 10
-			console.log(multiplier);
-		}
-		else if(event.key === 's' && multiplier < 100){
+		   }
+		   else if(event.key === 'x' && multiplier < 100){
 			multiplier *= 10;
+		   }		 
+	});
+	document.addEventListener('click', (event) => {
+		console.log('clicked');
+		if (planet_urls[planets[INTERSECTED.id]])
+		{
+			window.open(planet_urls[planets[INTERSECTED.id]]);
 		}
 	});
 
@@ -219,7 +252,7 @@ function onDocumentMouseMove( event )
 }
 
 function animate() {
-	console.log(multiplier);
+	controls.update(0.01);
 	let index = 0;
 	objects.forEach( Element => {
 		Element.rotation.y -= rotation[index] * multiplier;
@@ -251,9 +284,17 @@ function animate() {
 		if ( intersects[ 0 ].object != INTERSECTED ) 
 		{
 			if ( INTERSECTED ) 
+			{
 				hideOutline(INTERSECTED);
+				document.getElementById('planet_name').innerHTML = " ";
+			}
 			INTERSECTED = intersects[ 0 ].object;
 			showOutline(INTERSECTED);
+			if (planets[INTERSECTED.id])
+			{
+				document.getElementById('planet_name').innerHTML = planets[INTERSECTED.id];
+			}
+
 		}
 	} 
 	else // there are no intersections
@@ -261,10 +302,16 @@ function animate() {
 		if ( INTERSECTED ) 
 			hideOutline(INTERSECTED);
 		INTERSECTED = null;
+		document.getElementById('planet_name').innerHTML = " ";
 	}
 }
 var text2 = document.createElement('div');
 text2.innerHTML = "0 days elapsed on earth";
 text2.id = 'days_info'
 document.body.appendChild(text2);
+
+var planet_name = document.createElement('div');
+planet_name.innerHTML = " ";
+planet_name.id = 'planet_name'
+document.body.appendChild(planet_name);
 init();

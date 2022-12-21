@@ -38,6 +38,18 @@ let objects = [], //  [sun, mercury, venus, earth, mars, jupiter, saturn, saturn
 	moon, moonRevolute = 0.0;
 
 let planets = {};
+let planet_urls = {
+	'The Sun': 'https://en.wikipedia.org/wiki/Sun',
+	'Mercury': 'https://en.wikipedia.org/wiki/Mercury_(planet)',
+	'Venus': 'https://en.wikipedia.org/wiki/Venus',
+	'Earth': 'https://en.wikipedia.org/wiki/Earth',
+	'The Moon': 'https://en.wikipedia.org/wiki/Moon',
+	'Mars': 'https://en.wikipedia.org/wiki/Mars',
+	'Jupiter': 'https://en.wikipedia.org/wiki/Jupiter',
+	'Saturn': 'https://en.wikipedia.org/wiki/Saturn',
+	'Uranus': 'https://en.wikipedia.org/wiki/Uranus',
+	'Neptune': 'https://en.wikipedia.org/wiki/Neptune'
+}
 class Planet {
 	constructor(src, radius, position, axialTilt){
 		const geo = new THREE.SphereGeometry(radius, 64, 32);
@@ -217,6 +229,13 @@ function init() {
 		}
 		else if(event.key === 's' && multiplier < 100){
 			multiplier *= 10;
+		}
+	});
+	document.addEventListener('click', (event) => {
+		console.log('clicked');
+		if (planet_urls[planets[INTERSECTED.id]])
+		{
+			window.open(planet_urls[planets[INTERSECTED.id]]);
 		}
 	});
 
